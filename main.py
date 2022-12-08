@@ -10,11 +10,20 @@ import time
 wsh = comctl.Dispatch("WScript.Shell")
 wsh.AppActivate("Play Flappy Bird")
 
+previous = 0
 def onupdate(u):
-  # print(u)
-  if u["bird"] > u["pipe"]:
+  global previous
+  diff = u["bird"] - previous
+  # print(diff)
+  offset = 0
+  if diff >= 0:
+    offset = 1.77e-17 * (diff ** 12)
+  else:
+    offset = 20e-2 * (diff ** 3)
+  if diff != 0 and u["bird"] + offset > u["pipe"]:
     press(" ")
     time.sleep(0.07)
+  previous = u["bird"]
 
 # initial jump to start the game
 press(" ")
