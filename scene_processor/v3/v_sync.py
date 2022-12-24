@@ -1,16 +1,17 @@
 import numpy as np
 import dxcam
 
-GAME_BBOX = [722, 306, 477, 540]
-PIPE_RELATIVE = [468, 0, 1, 444]
-BIRD_RELATIVE = [205, 9, 1, 550]
-EXITING_PIPE_RELATIVE = [BIRD_RELATIVE[0], PIPE_RELATIVE[1], 1, 1]
-EXISTING_PIPE_OFFSET_UP = 26
-EXISTING_PIPE_OFFSET_DOWN = 17
+GAME_WIDTH = 479
+GAME_HEIGHT = 550
+GAME_BBOX = [0, 0, GAME_WIDTH, GAME_HEIGHT]
+PIPE_RELATIVE = [GAME_WIDTH  - 1, 0, 1, 444]
+BIRD_RELATIVE = [206, 9, 1, GAME_HEIGHT - 1]
+EXITING_PIPE_RELATIVE = [BIRD_RELATIVE[0] - 1, PIPE_RELATIVE[1], 1, 1]
+EXISTING_PIPE_OFFSET_UP = 25
+EXISTING_PIPE_OFFSET_DOWN = 14
 
 PIPE_SEPARATION = 160
-BIRD_MARGIN = 74
-JUMP = 40
+BIRD_MARGIN = 64
 
 class SceneProcessor:
   def __init__(self, onupdate):
@@ -21,8 +22,30 @@ class SceneProcessor:
     self.bird_height = 0
     self.next_up = False
     self.onupdate = onupdate
+    # read game dimensions
+    self.readDimensions()
     # start capturing process
     self.capture()
+
+  def readDimensions(self):
+    screen = self.cam.grab()
+    screenHeight = len(screen); screenWidth = len(screen[0])
+    startX = 0; startY = 0
+
+    isGameSky = lambda color : np.array_equal(color, [112, 197, 206])
+    try:
+      # find x value
+      while(not isGameSky(screen[round(screenHeight / 2)][startX])):
+        startX += 1
+      GAME_BBOX[0] = startX
+      # find y value
+      while(not isGameSky(screen[startY][round(screenWidth / 2)])):
+        startY += 1
+      GAME_BBOX[1] = startY
+    except IndexError:
+      print("Error locating game dimensions")
+      exit(1)
+    print("GAME DIMENSIONS:", GAME_BBOX)
 
   def capture(self):
     while True:
@@ -50,6 +73,7 @@ class SceneProcessor:
         pipe_height += 1
       self.next_up = len(self.pipes) > 0 and self.pipes[0] > pipe_height
       self.pipes.append(pipe_height)
+      print("[PIPE:ADD]", self.pipes)
     elif not self.isPipe(game, PIPE_RELATIVE[1], PIPE_RELATIVE[0]):
       self.pipe_height_last = False
 
@@ -59,6 +83,7 @@ class SceneProcessor:
     if not isExitingPipe and self.pipe_exit_last:
       self.pipe_exit_last = False
       self.pipes.pop(0)
+      print("[PIPE:REMOVE]", self.pipes)
     elif isExitingPipe:
       self.pipe_exit_last = True
 

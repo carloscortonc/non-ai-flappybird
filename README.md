@@ -56,17 +56,18 @@ This part should be very straight forward: if the position of the bird is lower 
 
 ### Problem 1: Consecutive jumps I
 
-When a jump is triggered, the next updated data still shows the bird with a lower position than the pipe, which causes a consecutive jump, and in most scenarios is fatal. To fix this, a `sleep` call was introduced after a jump is perfomed, so when the scene is next read the bird's position is higher than the pipe's.
+When a jump is triggered, the next updated data still shows the bird with a lower position than the pipe, which causes a consecutive jump, and in most scenarios is fatal. To fix this, a `sleep` call was introduced after a jump is perfomed, so when the scene is next read the bird's position is higher than the pipe's. To prevemt similar issues, a counter was also used to keep track of the number of updates since the last jump. This way, we can also avoid consecutive jumps by requiring this counter to be above a certain number.
 
 ### Problem 2: Big jumps to lower pipes
 
 The bird's height follows the laws of physics: the more time it is free-falling the more speed it will gain. In the context of the game, the greater the velocity the bigger the difference in the bird's y-position between consecutive frames. If the bird faces a big jump to a lower pipe, by the time the program identifies that it should jump, its position is already too low to clear the pipe.
 
 **The solution**: use an offset to add to the bird's position. This offset should be proportional to the bird's velocity: as the velocity increases the offset does too. This works like a smoothing function: if the bird needs to travel from y=100 down to y=300, it might jump first on y=270, then on y=290 until it finally reaches y=300. The tricky part is finding the correct function to model this behaviour.
+
 To do this, I first gathered same data, like the difference (from now on, `diff`) in the bird's y-position between updates (what can be interpreted as velocity). The maximum value came around `30px`. The next step was determining what offset should be applied in this maximum case: this was a trial-error phase. The basic ideas were:
 
 - The greater the `diff` the higher the offset should be.
-- For `diff=0`, the offset should be 0 as well ($f(0)=0$).
+- For `diff=0`, the offset should be 0 as well ( $f(0)=0$).
 - For the max `diff`, the offset should be a certain value, lets say 20px. This means that if the bird's speed is terminal (30px/update), we add 20px to its position (we simulate it is lower than it really is) so it jumps earlier.
 
 <img src="./images/problem-2-functions.png" align="right" />
@@ -136,5 +137,5 @@ python3 main.py
 The program will:
 
 - Gain focus on the browser where the game is opened
-- _TODO_ Calculate the correct coordinates of the game (this varies depending on screen size)
+- Calculate the correct coordinates of the game (this varies depending on screen size)
 - Start the game
