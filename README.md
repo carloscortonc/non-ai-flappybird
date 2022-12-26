@@ -11,7 +11,7 @@ This project is build on top of the game [flappybird.io](https://flappybird.io),
 To decide on the program strategy, I analized what I do when playing this game: when the bird is falling and is about to hit the lower pipe, I jump. If the bird's position is lower than the next pipe, I jump until the previous statement applies. This makes it a simple strategy:
 
 - We keep track of the position of the bird and the lower pipe. When the bird's position is lower than the latter, we command the program to jump.
-- New pipes are spawning at a certain rate. A pipe is relevant (to the point above) until it is further to the left of the bird, at which point we switch on to the next pipe.
+- New pipes are spawning at a certain rate. A pipe is relevant until it is further to the left of the bird, at which point we switch on to the next pipe.
 
 <p align="center">
   <img height="400" src="./images/determine-the-strategy.png">
@@ -37,7 +37,7 @@ The result of this process must consist on two pieces of information: the positi
 
 For the **bird**, we need to identify the best column to look into. The main issue is that when the bird jumps, its body changes orientation, and some of its colors differ from one frame to another. To adress this issue, I analyzed different images of the bird on different orientations to find the best coordinates and color (I decided on <img src="https://img.shields.io/static/v1?label=&message=rgb(212,191,39)&color=D4BF27" />).
 
-For the **pipe**, we can just look to the top-right corner of the game-screenshot and wait to see something different than the sky color (<img src="https://img.shields.io/static/v1?label=&message=rgb(112,197,206)&color=70C5CE" />). To address the spawning of new pipes, we will also capture the pipe at the same x-position as the bird. This way, when the bird passes the pipe, the current pipe will be removed and the next in the queue will be used.
+For the **pipe**, we can just look to the top-right corner of the game-screenshot and wait to see something different than the sky color (<img src="https://img.shields.io/static/v1?label=&message=rgb(112,197,206)&color=70C5CE" />). To address the spawning of new pipes, we will also capture the pipe at the same *x*-position as the bird. This way, when the bird passes the pipe, the current pipe will be removed and the next in the queue will be used.
 
 In the coordinate system used, _y_ goes from top to bottom and _x_ from left to right, so the point _x=0, y=0_ is in the top left corner of the game. This becomes relevant when later describing the logic implemented.
 
@@ -56,15 +56,15 @@ This part should be very straight forward: if the position of the bird is lower 
 
 ### Problem 1: Consecutive jumps I
 
-When a jump is triggered, the next updated data still shows the bird with a lower position than the pipe, which causes a consecutive jump, and in most scenarios is fatal. To fix this, a `sleep` call was introduced after a jump is perfomed, so when the scene is next read the bird's position is higher than the pipe's. To prevemt similar issues, a counter was also used to keep track of the number of updates since the last jump. This way, we can also avoid consecutive jumps by requiring this counter to be above a certain number.
+When a jump is triggered, the next updated data still shows the bird with a lower position than the pipe, which causes a consecutive jump, and in most scenarios is fatal. To fix this, a `sleep` call was introduced after a jump is perfomed, so when the scene is next read the bird's position is higher than the pipe's. To prevent similar issues, a counter was also used to keep track of the number of updates since the last jump. This way, we can also avoid consecutive jumps by requiring this counter to be above a certain number.
 
 ### Problem 2: Big jumps to lower pipes
 
-The bird's height follows the laws of physics: the more time it is free-falling the more speed it will gain. In the context of the game, the greater the velocity the bigger the difference in the bird's y-position between consecutive frames. If the bird faces a big jump to a lower pipe, by the time the program identifies that it should jump, its position is already too low to clear the pipe.
+The bird's height follows the laws of physics: the more time it is free-falling the more speed it will gain. In the context of the game, the greater the velocity the bigger the difference in the bird's *y*-position between consecutive frames. If the bird faces a big jump to a lower pipe, by the time the program identifies that it should jump, its position is already too low to clear the pipe.
 
-**The solution**: use an offset to add to the bird's position. This offset should be proportional to the bird's velocity: as the velocity increases the offset does too. This works like a smoothing function: if the bird needs to travel from y=100 down to y=300, it might jump first on y=270, then on y=290 until it finally reaches y=300. The tricky part is finding the correct function to model this behaviour.
+**The solution**: use an offset to add to the bird's position. This offset should be proportional to the bird's velocity: as the velocity increases the offset does too. This works like a smoothing function: if the bird needs to travel from *y=100* down to *y=300*, it might jump first on *y=270*, then on *y=290* until it finally reaches *y=300*. The tricky part is finding the correct function to model this behaviour.
 
-To do this, I first gathered same data, like the difference (from now on, `diff`) in the bird's y-position between updates (what can be interpreted as velocity). The maximum value came around `30px`. The next step was determining what offset should be applied in this maximum case: this was a trial-error phase. The basic ideas were:
+To do this, I first gathered same data, like the difference (from now on, `diff`) in the bird's *y*-position between updates (what can be interpreted as velocity). The maximum value came around `30px`. The next step was determining what offset should be applied in this maximum case: this was a trial-error phase. The basic ideas were:
 
 - The greater the `diff` the higher the offset should be.
 - For `diff=0`, the offset should be 0 as well ( $f(0)=0$).
@@ -87,7 +87,7 @@ The table below shows the resulting offset for various exponents (for positive v
 
 <img src="./images/problem-2-switching-pipes.png" width="380" align="right" />
 
-Another optimization made in this area was the switching from one pipe onto the next. As it was described in [what-to-capture](#what-to-capture) section, the basic idea is to change to the next available pipe when the bird's x-position is greater than the current pipe. But this condition may vary depending on whether the next pipe is higher or lower than the current one: if the next pipe is higher and we switch too soon to the next, the issued jump (because the bird is lower than the now current pipe) may cause the bird to hit the previous pipe. This problem is not that critical when the next pipe is lower: the bird simply does not jump and clears the pipe.
+Another optimization made in this area was the switching from one pipe onto the next. As it was described in [what-to-capture](#what-to-capture) section, the basic idea is to change to the next available pipe when the bird's *x*-position is greater than the current pipe. But this condition may vary depending on whether the next pipe is higher or lower than the current one: if the next pipe is higher and we switch too soon to the next, the issued jump (because the bird is lower than the now current pipe) may cause the bird to hit the previous pipe. This problem is not that critical when the next pipe is lower: the bird simply does not jump and clears the pipe.
 Optimizing this will reduce the risk of "big jumps to lower pipes" by achiving the new required hight earlier on.
 The implementation part is simple: when a new pipe is identified, we store in a variable whether it is higher or lower than the previous, and we use this value when capturing the exiting pipe.
 <br clear="both" />
@@ -96,7 +96,7 @@ The implementation part is simple: when a new pipe is identified, we store in a 
 
 <img src="./images/problem-3-the-score.png" width="200" align="right" />
 
-This problem didn't have an affect at the beggining (when the bird's score would not go over 5), but as the program improved and the score increased, some runs would fail inexplicably. I ended up realizing that the score was sometimes covering the column we use to check and find the bird's position.
+This problem didn't have an effect at the beggining (when the bird's score would not go over 5), but as the program improved and the score increased, some runs would fail inexplicably. I ended up realizing that the score was sometimes covering the column we use to check and find the bird's position.
 
 **The solution**: Contemplate the posibility of not finding the bird during scene-detection. In this case, the previous known data should be used. _The score sits quite high in the game-canvas, so loosing some bird-position updates should not be that critical._
 
