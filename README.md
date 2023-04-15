@@ -88,7 +88,7 @@ The table below shows the resulting offset for various exponents (for positive v
 <img src="./images/problem-2-switching-pipes.png" width="380" align="right" />
 
 Another optimization made in this area was the switching from one pipe onto the next. As it was described in [what-to-capture](#what-to-capture) section, the basic idea is to change to the next available pipe when the bird's *x*-position is greater than the current pipe. But this condition may vary depending on whether the next pipe is higher or lower than the current one: if the next pipe is higher and we switch too soon to the next, the issued jump (because the bird is lower than the now current pipe) may cause the bird to hit the previous pipe. This problem is not that critical when the next pipe is lower: the bird simply does not jump and clears the pipe.
-Optimizing this will reduce the risk of "big jumps to lower pipes" by achiving the new required hight earlier on.
+Optimizing this will reduce the risk of "big jumps to lower pipes" by achieving the new required height earlier on.
 The implementation part is simple: when a new pipe is identified, we store in a variable whether it is higher or lower than the previous, and we use this value when capturing the exiting pipe.
 <br clear="both" />
 
